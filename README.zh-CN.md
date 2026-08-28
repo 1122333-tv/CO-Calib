@@ -247,3 +247,21 @@ python -m http.server 8765 --bind 127.0.0.1
 - `Fit rig`：将全部相机适配到当前视口
 
 使用 `Ctrl+C` 停止本地服务器。
+
+## 7. 许可证
+
+除非文件或目录另有声明，CO-Calib 自有源代码、文档以及自主开发的
+`models/nn_detector_aprilgrid_6x6.onnx` 模型权重，均按照顶层
+[`LICENSE`](LICENSE) 中的 BSD-4-Clause 许可证分发。模型的权属与许可范围见
+[`models/MODEL_CARD.md`](models/MODEL_CARD.md)。
+
+本仓库在 `vendor/kalibr` 中分发经过修改的 Kalibr。再分发时必须保留原始
+Kalibr 版权声明、许可条件、免责声明、广告致谢条款和禁止背书条款。任何提及
+本软件功能或用途的广告材料都必须包含以下致谢：
+
+> This product includes software developed by the Autonomous Systems Lab and Skybotix AG.
+
+Kalibr 中的 `incremental_calibration` 和 `incremental_calibration_python`
+组件声明使用 LGPLv3，并继续受 LGPLv3 约束。完整分发声明和各组件许可条款见
+[`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md)、
+[`vendor/kalibr/LICENSE`](vendor/kalibr/LICENSE) 和 [`LICENSES/`](LICENSES/)。

@@ -276,3 +276,25 @@ Please cite our paper if you use this project in your research:
   year={2026}
 }
 ```
+
+## 8. License
+
+Unless a file or directory states otherwise, project-owned CO-Calib source
+code, documentation, and the self-developed
+`models/nn_detector_aprilgrid_6x6.onnx` weights are distributed under the
+BSD-4-Clause license in [`LICENSE`](LICENSE). Model ownership and scope are
+documented in [`models/MODEL_CARD.md`](models/MODEL_CARD.md).
+
+This repository distributes a modified copy of Kalibr under `vendor/kalibr`.
+Redistributions must preserve the original Kalibr copyright notices,
+conditions, disclaimer, advertising acknowledgement, and non-endorsement
+clause. In particular, advertising materials that mention features or use of
+this software must include:
+
+> This product includes software developed by the Autonomous Systems Lab and Skybotix AG.
+
+The Kalibr `incremental_calibration` and `incremental_calibration_python`
+components declare LGPLv3 terms and remain under LGPLv3. See
+[`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md),
+[`vendor/kalibr/LICENSE`](vendor/kalibr/LICENSE), and [`LICENSES/`](LICENSES/)
+for the complete distribution notices and component-specific terms.

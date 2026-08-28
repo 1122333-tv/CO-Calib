@@ -28,6 +28,10 @@ COPY src /opt/omnicalib/src
 COPY docker/kalibr/run_calibration.py /usr/local/bin/omnicalib-calibrate
 COPY docker/kalibr/extract_detections.py /usr/local/bin/omnicalib-acv-extract
 COPY docker/kalibr/entrypoint.sh /usr/local/bin/omnicalib-entrypoint
+COPY LICENSE NOTICE THIRD_PARTY_NOTICES.md /licenses/
+COPY LICENSES /licenses/
+COPY vendor/kalibr/LICENSE /licenses/KALIBR-LICENSE
+COPY models/MODEL_CARD.md /licenses/MODEL_CARD.md
 RUN chmod +x /usr/local/bin/omnicalib-calibrate /usr/local/bin/omnicalib-acv-extract /usr/local/bin/omnicalib-entrypoint
 
 WORKDIR /data

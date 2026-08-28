@@ -1,0 +1,15 @@
+CO-Calib
+Copyright (c) 2026, HKUST Aerial Robotics Group and CO-Calib contributors.
+
+This distribution contains a modified copy of the Kalibr visual-inertial
+calibration toolbox developed by the Autonomous Systems Lab at ETH Zurich and
+Skybotix AG.
+
+Required acknowledgement:
+This product includes software developed by the Autonomous Systems Lab and
+Skybotix AG.
+
+The bundled AprilGrid detector model, models/nn_detector_aprilgrid_6x6.onnx,
+is original work developed by the CO-Calib authors.
+
+See THIRD_PARTY_NOTICES.md and LICENSES/ for component-specific terms.

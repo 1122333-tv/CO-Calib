@@ -7,6 +7,7 @@ name = "omnicalib-open"
 version = "0.1.0"
 description = "NN-Detector and arbitrary-camera calibration Datawash"
 readme = "README.md"
+license = {file = "LICENSE"}
 requires-python = ">=3.10"
 dependencies = [
   "numpy>=2,<3",
