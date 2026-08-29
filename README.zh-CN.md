@@ -219,7 +219,7 @@ tagSpacing: 0.3
 
 ## 6. 外参可视化
 
-`visualization/` 中的浏览器工具用于显示 Kalibr `calibration-camchain.yaml` 中的多相机外参。YAML 文件仅在浏览器本地解析，不会上传标定数据。
+`visualization/` 中的浏览器工具用于显示 Kalibr `camchain.yaml` 或 `camchain-imucam.yaml` 中的多相机及相机-IMU 外参。YAML 文件仅在浏览器本地解析，不会上传标定数据。
 
 在 `Opensource/` 仓库根目录创建环境并启动可视化工具：
 
@@ -234,9 +234,11 @@ python -m http.server 8765 --bind 127.0.0.1
 
 ```text
 <input-name>_omnicalib/kalibr/calibration-camchain.yaml
+# 或 Kalibr 相机-IMU 标定结果
+calibration-camchain-imucam.yaml
 ```
 
-工具会显示相机视锥、相机坐标轴、相邻相机基线及距离、世界坐标网格和相机位姿表。支持包含连续 `cam0`、`cam1`、...、`camN` 节点的任意数量相机；`cam0` 之后的每个相机需要提供 4 x 4 `T_cn_cnm1` 变换。
+工具会显示相机视锥、相机坐标轴、相邻相机基线及距离、世界坐标网格和位姿表。如果相机节点包含 `T_cam_imu`，还会显示 IMU 本体、IMU 原生坐标轴、参考相机连线、相对旋转角，以及换算为毫秒的 `timeshift_cam_imu`。工具优先使用 `cam0` 作为 IMU 参考，并支持包含连续 `cam0`、`cam1`、...、`camN` 节点的任意数量相机；`cam0` 之后的每个相机需要提供 4 x 4 `T_cn_cnm1` 变换。
 
 操作方式：
 

@@ -236,7 +236,7 @@ Editable example configurations are provided in:
 
 ## 6. Extrinsic Visualization
 
-The browser visualizer in `visualization/` displays the multi-camera extrinsics from Kalibr's `calibration-camchain.yaml`. All YAML parsing happens locally in the browser and no calibration data is uploaded.
+The browser visualizer in `visualization/` displays multi-camera and camera-IMU extrinsics from Kalibr's `camchain.yaml` or `camchain-imucam.yaml`. All YAML parsing happens locally in the browser and no calibration data is uploaded.
 
 From the `Opensource/` repository root, create the visualization environment and start the server:
 
@@ -251,9 +251,11 @@ Open `http://127.0.0.1:8765/` and select or drag the generated file:
 
 ```text
 <input-name>_omnicalib/kalibr/calibration-camchain.yaml
+# or a Kalibr camera-IMU result
+calibration-camchain-imucam.yaml
 ```
 
-The visualizer shows camera frustums, camera axes, adjacent baselines, distances, a world grid, and a camera-pose table. It supports any contiguous `cam0`, `cam1`, ..., `camN` chain whose cameras after `cam0` provide a 4 x 4 `T_cn_cnm1` transform.
+The visualizer shows camera frustums, camera axes, adjacent baselines, distances, a world grid, and a pose table. If camera nodes contain `T_cam_imu`, it also displays the IMU body, native IMU axes, reference-camera link, relative rotation, and `timeshift_cam_imu` in milliseconds. It prefers `cam0` as the IMU reference and supports any contiguous `cam0`, `cam1`, ..., `camN` chain whose cameras after `cam0` provide a 4 x 4 `T_cn_cnm1` transform.
 
 Controls:
 

@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Kalibr Camchain Visualizer</title>
+<title>Kalibr Camera / IMU Visualizer</title>
 <style>
 :root{color-scheme:light;--bg:#eef1f3;--panel:#fff;--ink:#1d2329;--muted:#687078;--line:#d8dde1;--accent:#087e8b;--accent2:#e66a42;--field:#f8fafb}
 *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font-family:Inter,"PingFang SC","Microsoft YaHei",system-ui,sans-serif;letter-spacing:0}
@@ -12,16 +12,16 @@ h1{font-size:19px;margin:0 0 4px}.sub{font-size:12px;color:var(--muted);margin:0
 .status{font-size:12px;line-height:1.45;margin:10px 0 16px;padding:9px;border-left:3px solid var(--accent);background:#f2f8f8;overflow-wrap:anywhere}.status.error{border-color:#c53b32;background:#fff2f1;color:#8c2822}
 .group{padding-top:14px;margin-top:14px;border-top:1px solid var(--line)}.group-title{font-size:11px;font-weight:750;color:var(--muted);text-transform:uppercase;margin-bottom:10px}.check{display:flex;align-items:center;gap:8px;font-size:13px;margin:9px 0}.check input{margin:0}.row{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 button{min-height:36px;border:1px solid var(--line);border-radius:5px;background:var(--field);font:inherit;color:var(--ink);padding:7px 9px;cursor:pointer}button:focus-visible,.drop:focus-visible{outline:3px solid rgba(8,126,139,.25);outline-offset:2px}
-main{min-width:0;display:grid;grid-template-rows:minmax(480px,1fr) auto}.view{position:relative;min-height:480px;background:#fafbfb;overflow:hidden}canvas{display:block;width:100%;height:100%;touch-action:none}.hint{position:absolute;left:14px;top:14px;background:rgba(255,255,255,.88);border:1px solid var(--line);border-radius:5px;padding:7px 9px;font-size:11px;color:var(--muted);pointer-events:none}.legend{position:absolute;right:14px;bottom:14px;background:rgba(255,255,255,.9);border:1px solid var(--line);border-radius:5px;padding:8px 10px;font-size:11px;color:var(--muted);line-height:1.8}.axis{display:inline-block;width:14px;height:3px;margin:0 4px 2px 7px}.axis:first-child{margin-left:0}
-.table-wrap{max-height:250px;overflow:auto;background:#fff;border-top:1px solid var(--line)}table{border-collapse:collapse;width:100%;font-size:12px}th,td{padding:7px 9px;border-bottom:1px solid #e7eaec;text-align:left;white-space:nowrap}th{position:sticky;top:0;background:#f5f7f8;color:var(--muted);z-index:1}.empty{position:absolute;inset:0;display:grid;place-items:center;text-align:center;color:var(--muted);font-size:14px;pointer-events:none}.empty[hidden]{display:none}
+main{min-width:0;min-height:0;display:grid;grid-template-rows:minmax(480px,1fr) auto}.view{position:relative;min-height:480px;background:#fafbfb;overflow:hidden}canvas{display:block;width:100%;height:100%;touch-action:none}.hint{position:absolute;left:14px;top:14px;background:rgba(255,255,255,.88);border:1px solid var(--line);border-radius:5px;padding:7px 9px;font-size:11px;color:var(--muted);pointer-events:none}.legend{position:absolute;right:14px;bottom:14px;background:rgba(255,255,255,.9);border:1px solid var(--line);border-radius:5px;padding:8px 10px;font-size:11px;color:var(--muted);line-height:1.8}.axis{display:inline-block;width:14px;height:3px;margin:0 4px 2px 7px}.axis:first-child{margin-left:0}
+.table-wrap{max-height:250px;overflow:auto;background:#fff;border-top:1px solid var(--line)}table{border-collapse:collapse;width:100%;font-size:12px}th,td{padding:7px 9px;border-bottom:1px solid #e7eaec;text-align:left;white-space:nowrap}th{position:sticky;top:0;background:#f5f7f8;color:var(--muted);z-index:1}.device{display:inline-flex;align-items:center;gap:6px}.device-dot{width:8px;height:8px;border-radius:50%}.empty{position:absolute;inset:0;display:grid;place-items:center;text-align:center;color:var(--muted);font-size:14px;pointer-events:none}.empty[hidden]{display:none}
 @media(max-width:800px){.app{height:auto;min-height:100vh;grid-template-columns:minmax(0,1fr);grid-template-rows:auto auto}aside{border-right:0;border-bottom:1px solid var(--line)}main{height:660px;min-height:0;grid-template-rows:minmax(500px,1fr) auto}.view{min-height:0}.hint{display:none}}
 </style>
 </head>
 <body>
 <div class="app">
 <aside>
-  <h1>Kalibr Camchain Visualizer</h1>
-  <p class="sub">Load a Kalibr <b>camchain.yaml</b>. The file is parsed locally and never uploaded.</p>
+  <h1>Kalibr Camera / IMU Visualizer</h1>
+  <p class="sub">Load a Kalibr <b>camchain.yaml</b> or <b>camchain-imucam.yaml</b>. The file is parsed locally and never uploaded.</p>
   <label id="drop" class="drop" tabindex="0" role="button" for="file">
     <strong>Select or drop a calibration file</strong><span>.yaml / .yml</span>
   </label>
@@ -31,8 +31,9 @@ main{min-width:0;display:grid;grid-template-rows:minmax(480px,1fr) auto}.view{po
     <div class="group-title">Display</div>
     <label class="check"><input id="frustums" type="checkbox" checked>Camera frustums</label>
     <label class="check"><input id="axes" type="checkbox" checked>Camera axes</label>
-    <label class="check"><input id="labels" type="checkbox" checked>Camera labels</label>
-    <label class="check"><input id="links" type="checkbox" checked>Adjacent baselines and distances</label>
+    <label class="check"><input id="imu" type="checkbox" checked>IMU body and axes</label>
+    <label class="check"><input id="labels" type="checkbox" checked>Device labels</label>
+    <label class="check"><input id="links" type="checkbox" checked>Baselines and camera-IMU link</label>
     <label class="check"><input id="grid" type="checkbox" checked>World axes and grid</label>
   </div>
   <div class="group">
@@ -44,16 +45,16 @@ main{min-width:0;display:grid;grid-template-rows:minmax(480px,1fr) auto}.view{po
   <section class="view" id="view">
     <canvas id="canvas"></canvas>
     <div class="hint">Left drag: orbit · Right/Alt drag: pan · Wheel: zoom</div>
-    <div class="legend"><span class="axis" style="background:#d84038"></span>X <span class="axis" style="background:#2c9859"></span>Y <span class="axis" style="background:#2869ce"></span>Z<br>World: X forward / Y left / Z up</div>
-    <div id="empty" class="empty">Load camchain.yaml to visualize camera poses</div>
+    <div class="legend"><span class="axis" style="background:#d84038"></span>X <span class="axis" style="background:#2c9859"></span>Y <span class="axis" style="background:#2869ce"></span>Z<br><span class="axis" style="background:#e66a42"></span>Camera <span class="axis" style="background:#d59b16"></span>IMU<br>World: X forward / Y left / Z up</div>
+    <div id="empty" class="empty">Load a Kalibr camera or camera-IMU chain</div>
   </section>
-  <div class="table-wrap"><table><thead><tr><th>Camera</th><th>Model</th><th>Resolution</th><th>X forward (mm)</th><th>Y left (mm)</th><th>Z up (mm)</th><th>Distance from cam0 (mm)</th><th>Rotation from previous camera</th></tr></thead><tbody id="tbody"></tbody></table></div>
+  <div class="table-wrap"><table><thead><tr><th>Device</th><th>Type / model</th><th>Resolution</th><th>X forward (mm)</th><th>Y left (mm)</th><th>Z up (mm)</th><th>Distance from cam0 (mm)</th><th>Relative to</th><th>Relative rotation</th><th>Camera-IMU dt (ms)</th></tr></thead><tbody id="tbody"></tbody></table></div>
 </main>
 </div>
 <script>
 'use strict';
 const $=s=>document.querySelector(s), canvas=$('#canvas'), ctx=canvas.getContext('2d');
-const state={cams:[],yaw:-.7,pitch:.48,zoom:1,panX:0,panY:0,fitRadius:null};
+const state={cams:[],imu:null,yaw:-.7,pitch:.48,zoom:1,panX:0,panY:0,fitRadius:null};
 
 // Naming rule: T_A_B maps homogeneous point coordinates from frame B to A.
 const T_IDENTITY=[[1,0,0,0],[0,1,0,0],[0,0,1,0],[0,0,0,1]];
@@ -94,6 +95,7 @@ function validateRigidTransform(T,label){
   if(Math.abs(det-1)>2e-2)throw new Error(`${label} rotation determinant must be +1`);
 }
 function parseList(raw){const s=raw.trim();if(!s.startsWith('[')||!s.endsWith(']'))throw new Error(`Cannot parse array: ${raw}`);return s.slice(1,-1).split(',').map(v=>Number(v.trim()))}
+function parseNumberSequence(lines,startIndex){const values=[];for(let i=startIndex+1;i<lines.length;i++){if(!lines[i].trim()||lines[i].trim().startsWith('#'))continue;const item=lines[i].match(/^\s*-\s*([^#\s]+)\s*(?:#.*)?$/);if(!item)break;const value=Number(item[1]);if(!Number.isFinite(value))throw new Error(`Cannot parse numeric sequence value: ${item[1]}`);values.push(value)}return values}
 function parseMatrixRows(lines,startIndex){
   const rows=[];
   for(let i=startIndex+1;i<lines.length&&rows.length<4;i++){
@@ -131,14 +133,18 @@ function parseCamchain(text){
       const m=sec.lines[i].match(/^\s+([A-Za-z0-9_]+)\s*:\s*(.*?)\s*(?:#.*)?$/);
       if(!m)continue;
       const key=m[1],val=m[2];
-      if(key==='T_cn_cnm1'){
+      if(key==='T_cn_cnm1'||key==='T_cam_imu'){
         const rows=parseMatrixRows(sec.lines,i);
-        validateRigidTransform(rows,`${sec.name}.T_cn_cnm1`);
-        out.T_cam_from_prev=rows;
-      }else if(key==='resolution'&&val.startsWith('[')){
-        out[key]=parseList(val);
+        validateRigidTransform(rows,`${sec.name}.${key}`);
+        if(key==='T_cn_cnm1')out.T_cam_from_prev=rows;
+        else out.T_cam_from_imu=rows;
+      }else if(key==='resolution'){
+        out[key]=val.startsWith('[')?parseList(val):parseNumberSequence(sec.lines,i);
       }else if(key==='camera_model'){
         out[key]=val.replace(/^['"]|['"]$/g,'');
+      }else if(key==='timeshift_cam_imu'){
+        out[key]=Number(val);
+        if(!Number.isFinite(out[key]))throw new Error(`${sec.name}.timeshift_cam_imu must be a finite number`);
       }
     }
     return out;
@@ -156,6 +162,18 @@ function parseCamchain(text){
     return {...camera,T_world_from_cam};
   });
 
+  const imuSources=cameras.filter(camera=>camera.T_cam_from_imu);
+  let imu=null;
+  if(imuSources.length){
+    const source=imuSources.find(camera=>camera.name==='cam0')||imuSources[0];
+    imu={
+      name:'IMU',
+      referenceCamera:source.name,
+      timeshift_cam_imu:source.timeshift_cam_imu??null,
+      T_reference_from_imu:source.T_cam_from_imu,
+      T_world_from_imu:multiplyTransforms(source.T_world_from_cam,source.T_cam_from_imu),
+    };
+  }
   const centroidX=cameras.reduce((sum,camera)=>sum+camera.T_world_from_cam[0][3],0)/cameras.length;
   const centroidY=cameras.reduce((sum,camera)=>sum+camera.T_world_from_cam[1][3],0)/cameras.length;
   const T_centered_world_from_world=[
@@ -167,7 +185,8 @@ function parseCamchain(text){
   cameras.forEach(camera=>{
     camera.T_world_from_cam=multiplyTransforms(T_centered_world_from_world,camera.T_world_from_cam);
   });
-  return cameras;
+  if(imu)imu.T_world_from_imu=multiplyTransforms(T_centered_world_from_world,imu.T_world_from_imu);
+  return {cameras,imu};
 }
 function applyCameraPoses(){
   state.cams.forEach(camera=>{
@@ -176,23 +195,29 @@ function applyCameraPoses(){
     // Direct matrix columns in the native XYZ display coordinates.
     camera.axes=[0,1,2].map(col=>pose.slice(0,3).map(row=>row[col]));
   });
+  if(state.imu){
+    const pose=state.imu.T_world_from_imu;
+    state.imu.center=pose.slice(0,3).map(row=>row[3]);
+    state.imu.axes=[0,1,2].map(col=>pose.slice(0,3).map(row=>row[col]));
+  }
   state.fitRadius=null;
 }
-function loadText(text,name){try{state.cams=parseCamchain(text);applyCameraPoses();resetView();$('#empty').hidden=true;$('#status').className='status';$('#status').textContent=`${name} · Loaded ${state.cams.length} camera${state.cams.length===1?'':'s'}`;updateTable()}catch(e){state.cams=[];$('#empty').hidden=false;$('#status').className='status error';$('#status').textContent=e.message;$('#tbody').innerHTML='';draw()}}
+function loadText(text,name){try{const parsed=parseCamchain(text);state.cams=parsed.cameras;state.imu=parsed.imu;applyCameraPoses();$('#empty').hidden=true;$('#status').className='status';const imuStatus=state.imu?` + IMU${state.imu.timeshift_cam_imu===null?'':` · dt ${(state.imu.timeshift_cam_imu*1000).toFixed(3)} ms`}`:'';$('#status').textContent=`${name} · Loaded ${state.cams.length} camera${state.cams.length===1?'':'s'}${imuStatus}`;updateTable();resetView()}catch(e){state.cams=[];state.imu=null;$('#empty').hidden=false;$('#status').className='status error';$('#status').textContent=e.message;$('#tbody').innerHTML='';draw()}}
 function esc(v){return String(v).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
 function rotationAngleDeg(T){if(!T)return null;const trace=T[0][0]+T[1][1]+T[2][2],cos=Math.max(-1,Math.min(1,(trace-1)/2));return Math.acos(cos)*180/Math.PI}
-function updateTable(){const c0=state.cams[0]?.center||[0,0,0];$('#tbody').innerHTML=state.cams.map(c=>{const d=Math.hypot(...c.center.map((v,i)=>v-c0[i]))*1000,angle=rotationAngleDeg(c.T_cam_from_prev);return `<tr><td>${esc(c.name)}</td><td>${esc(c.camera_model||'—')}</td><td>${c.resolution?c.resolution.join(' × '):'—'}</td>${c.center.map(v=>`<td>${(v*1000).toFixed(2)}</td>`).join('')}<td>${d.toFixed(2)}</td><td>${angle===null?'—':`${angle.toFixed(3)}°`}</td></tr>`}).join('')}
-function radius(){if(state.fitRadius)return state.fitRadius;let r=.04;for(const c of state.cams)r=Math.max(r,Math.hypot(...c.center));return r}
+function updateTable(){const c0=state.cams[0]?.center||[0,0,0];const cameraRows=state.cams.map((c,index)=>{const d=Math.hypot(...c.center.map((v,i)=>v-c0[i]))*1000,angle=rotationAngleDeg(c.T_cam_from_prev),color=index===0?'#e66a42':'#087e8b';return `<tr><td><span class="device"><span class="device-dot" style="background:${color}"></span>${esc(c.name)}</span></td><td>${esc(c.camera_model||'camera')}</td><td>${c.resolution?c.resolution.join(' × '):'—'}</td>${c.center.map(v=>`<td>${(v*1000).toFixed(2)}</td>`).join('')}<td>${d.toFixed(2)}</td><td>${index===0?'—':esc(state.cams[index-1].name)}</td><td>${angle===null?'—':`${angle.toFixed(3)}°`}</td><td>—</td></tr>`});if(state.imu){const d=Math.hypot(...state.imu.center.map((v,i)=>v-c0[i]))*1000,angle=rotationAngleDeg(state.imu.T_reference_from_imu),dt=state.imu.timeshift_cam_imu;cameraRows.push(`<tr><td><span class="device"><span class="device-dot" style="background:#d59b16"></span>IMU</span></td><td>inertial</td><td>—</td>${state.imu.center.map(v=>`<td>${(v*1000).toFixed(2)}</td>`).join('')}<td>${d.toFixed(2)}</td><td>${esc(state.imu.referenceCamera)}</td><td>${angle.toFixed(3)}°</td><td>${dt===null?'—':(dt*1000).toFixed(3)}</td></tr>`)}$('#tbody').innerHTML=cameraRows.join('')}
+function radius(){if(state.fitRadius)return state.fitRadius;let r=.04;for(const c of state.cams)r=Math.max(r,Math.hypot(...c.center));if(state.imu)r=Math.max(r,Math.hypot(...state.imu.center));return r}
 function rotate(p){const cy=Math.cos(state.yaw),sy=Math.sin(state.yaw),cp=Math.cos(state.pitch),sp=Math.sin(state.pitch);const x=cy*p[0]-sy*p[1],y=sy*p[0]+cy*p[1],z=p[2];return[x,cp*y-sp*z,sp*y+cp*z]}
 function projector(){const b=canvas.getBoundingClientRect(),s=Math.min(b.width,b.height)*.36*state.zoom/radius();return p=>{const q=rotate(p);return{x:b.width/2+state.panX+q[0]*s,y:b.height/2+state.panY-q[1]*s,z:q[2]}}}
 const add=(a,b)=>a.map((v,i)=>v+b[i]),scale=(a,s)=>a.map(v=>v*s);
-function line(P,a,b,color,w=1,alpha=1){const x=P(a),y=P(b);ctx.save();ctx.globalAlpha=alpha;ctx.strokeStyle=color;ctx.lineWidth=w;ctx.beginPath();ctx.moveTo(x.x,x.y);ctx.lineTo(y.x,y.y);ctx.stroke();ctx.restore()}
+function line(P,a,b,color,w=1,alpha=1,dash=[]){const x=P(a),y=P(b);ctx.save();ctx.globalAlpha=alpha;ctx.strokeStyle=color;ctx.lineWidth=w;ctx.setLineDash(dash);ctx.beginPath();ctx.moveTo(x.x,x.y);ctx.lineTo(y.x,y.y);ctx.stroke();ctx.restore()}
 function arrow(P,a,b,color,label=''){line(P,a,b,color,2);const x=P(a),y=P(b),ang=Math.atan2(y.y-x.y,y.x-x.x);ctx.save();ctx.fillStyle=color;ctx.beginPath();ctx.moveTo(y.x,y.y);ctx.lineTo(y.x-7*Math.cos(ang-.45),y.y-7*Math.sin(ang-.45));ctx.lineTo(y.x-7*Math.cos(ang+.45),y.y-7*Math.sin(ang+.45));ctx.fill();if(label){ctx.font='700 11px system-ui';ctx.fillText(label,y.x+4,y.y-4)}ctx.restore()}
 function grid(P,r){const step=r<.12?.02:.05,ext=Math.ceil(r/step+1)*step;for(let v=-ext;v<=ext+.0001;v+=step){line(P,[-ext,v,0],[ext,v,0],'#e1e6e8',1);line(P,[v,-ext,0],[v,ext,0],'#e1e6e8',1)}const len=Math.max(.035,r*.5);arrow(P,[0,0,0],[len,0,0],'#555','X');arrow(P,[0,0,0],[0,len,0],'#555','Y');arrow(P,[0,0,0],[0,0,len],'#555','Z')}
 function frustum(P,c,size){const [x,y,z]=c.axes,center=add(c.center,scale(z,size*.7)),corners=[[.65,.45],[-.65,.45],[-.65,-.45],[.65,-.45]].map(([u,v])=>add(add(center,scale(x,u*size)),scale(y,v*size)));corners.forEach((p,i)=>{line(P,c.center,p,'#087e8b',1.3,.85);line(P,p,corners[(i+1)%4],'#087e8b',1.3,.85)})}
+function imuBody(P,imu,size){const signs=[[-1,-1,-1],[1,-1,-1],[1,1,-1],[-1,1,-1],[-1,-1,1],[1,-1,1],[1,1,1],[-1,1,1]],corners=signs.map(([sx,sy,sz])=>add(add(add(imu.center,scale(imu.axes[0],sx*size*.7)),scale(imu.axes[1],sy*size*.5)),scale(imu.axes[2],sz*size*.35))),edges=[[0,1],[1,2],[2,3],[3,0],[4,5],[5,6],[6,7],[7,4],[0,4],[1,5],[2,6],[3,7]];edges.forEach(([a,b])=>line(P,corners[a],corners[b],'#b47c00',2,.95))}
 function label(P,c){const p=P(c.center);ctx.save();ctx.font='700 12px system-ui';ctx.fillStyle='#172026';ctx.fillText(c.name,p.x+7,p.y-7);ctx.restore()}
 function distance(P,a,b){const pa=P(a.center),pb=P(b.center),text=`${(Math.hypot(...a.center.map((v,i)=>v-b.center[i]))*1000).toFixed(1)} mm`,x=(pa.x+pb.x)/2,y=(pa.y+pb.y)/2;ctx.save();ctx.font='700 11px system-ui';const w=ctx.measureText(text).width+10;ctx.fillStyle='rgba(255,255,255,.9)';ctx.fillRect(x-w/2,y-9,w,18);ctx.fillStyle='#087e8b';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText(text,x,y);ctx.restore()}
-function draw(){const b=canvas.getBoundingClientRect(),d=devicePixelRatio||1,w=Math.max(1,Math.floor(b.width*d)),h=Math.max(1,Math.floor(b.height*d));if(canvas.width!==w||canvas.height!==h){canvas.width=w;canvas.height=h}ctx.setTransform(d,0,0,d,0,0);ctx.clearRect(0,0,b.width,b.height);if(!state.cams.length)return;const P=projector(),r=radius(),size=Math.max(.015,Math.min(.055,r*.25));if($('#grid').checked)grid(P,r);if($('#links').checked)for(let i=1;i<state.cams.length;i++){line(P,state.cams[i-1].center,state.cams[i].center,'#087e8b',3,.5);distance(P,state.cams[i-1],state.cams[i])}const ordered=[...state.cams].sort((a,b)=>P(a.center).z-P(b.center).z);for(const c of ordered){if($('#frustums').checked)frustum(P,c,size);if($('#axes').checked){const displayAxes=[scale(c.axes[0],-1),scale(c.axes[1],-1),c.axes[2]],colors=['#d84038','#2c9859','#2869ce'],labels=['X','Y','Z'];colors.forEach((color,i)=>arrow(P,c.center,add(c.center,scale(displayAxes[i],size*.9)),color,labels[i]))}const p=P(c.center);ctx.fillStyle='#e66a42';ctx.beginPath();ctx.arc(p.x,p.y,4.5,0,Math.PI*2);ctx.fill();if($('#labels').checked)label(P,c)}}
+function draw(){const b=canvas.getBoundingClientRect(),d=devicePixelRatio||1,w=Math.max(1,Math.floor(b.width*d)),h=Math.max(1,Math.floor(b.height*d));if(canvas.width!==w||canvas.height!==h){canvas.width=w;canvas.height=h}ctx.setTransform(d,0,0,d,0,0);ctx.clearRect(0,0,b.width,b.height);if(!state.cams.length)return;const P=projector(),r=radius(),size=Math.max(.015,Math.min(.055,r*.25));if($('#grid').checked)grid(P,r);if($('#links').checked){for(let i=1;i<state.cams.length;i++){line(P,state.cams[i-1].center,state.cams[i].center,'#087e8b',3,.5);distance(P,state.cams[i-1],state.cams[i])}if(state.imu){const reference=state.cams.find(c=>c.name===state.imu.referenceCamera);if(reference)line(P,reference.center,state.imu.center,'#d59b16',2,.9,[6,5])}}const ordered=[...state.cams].sort((a,b)=>P(a.center).z-P(b.center).z);for(const c of ordered){if($('#frustums').checked)frustum(P,c,size);if($('#axes').checked){const displayAxes=[scale(c.axes[0],-1),scale(c.axes[1],-1),c.axes[2]],colors=['#d84038','#2c9859','#2869ce'],labels=['X','Y','Z'];colors.forEach((color,i)=>arrow(P,c.center,add(c.center,scale(displayAxes[i],size*.9)),color,labels[i]))}const p=P(c.center);ctx.fillStyle=c.name==='cam0'?'#e66a42':'#087e8b';ctx.beginPath();ctx.arc(p.x,p.y,4.5,0,Math.PI*2);ctx.fill();if($('#labels').checked)label(P,c)}if(state.imu&&$('#imu').checked){imuBody(P,state.imu,size);const colors=['#d84038','#2c9859','#2869ce'],labels=['X','Y','Z'];colors.forEach((color,i)=>arrow(P,state.imu.center,add(state.imu.center,scale(state.imu.axes[i],size*1.15)),color,labels[i]));const p=P(state.imu.center);ctx.fillStyle='#d59b16';ctx.beginPath();ctx.arc(p.x,p.y,5,0,Math.PI*2);ctx.fill();if($('#labels').checked)label(P,state.imu)}}
 function resetView(){Object.assign(state,{yaw:-.7,pitch:.48,zoom:1,panX:0,panY:0});draw()}
 $('#file').addEventListener('change',async e=>{const f=e.target.files[0];if(f)loadText(await f.text(),f.name)});$('#reset').onclick=resetView;$('#fit').onclick=()=>{state.zoom=1;state.panX=state.panY=0;draw()};document.querySelectorAll('.check input').forEach(x=>x.onchange=draw);
 const drop=$('#drop');['dragenter','dragover'].forEach(n=>drop.addEventListener(n,e=>{e.preventDefault();drop.classList.add('drag')}));['dragleave','drop'].forEach(n=>drop.addEventListener(n,e=>{e.preventDefault();drop.classList.remove('drag')}));drop.addEventListener('drop',async e=>{const f=e.dataTransfer.files[0];if(f)loadText(await f.text(),f.name)});drop.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();$('#file').click()}});
