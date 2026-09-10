@@ -81,6 +81,17 @@ class NNDetector:
         providers = ["CPUExecutionProvider"]
         cuda_available = "CUDAExecutionProvider" in ort.get_available_providers()
         if self.device != "cpu" and cuda_available:
+            # NVIDIA pip wheels install libraries outside the system loader path.
+            # ORT >= 1.21 can preload these before creating the CUDA provider.
+            if hasattr(ort, "preload_dlls"):
+                try:
+                    ort.preload_dlls()
+                except Exception as exc:
+                    warnings.warn(
+                        f"CUDA library preload failed: {exc}; trying normal provider initialization",
+                        RuntimeWarning,
+                        stacklevel=2,
+                    )
             providers = ["CUDAExecutionProvider", "CPUExecutionProvider"]
         elif self.device == "gpu" and not cuda_available:
             warnings.warn(

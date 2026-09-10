@@ -83,6 +83,57 @@ omnicalib run \
 
 ## 3. 输入数据
 
+### 本地快速启动与模型对比
+
+本仓库的 `run_calibration.sh` 默认使用本机 OAK4P 数据、NN-Detector 和 GPU。
+`--model` 支持 `eucm-none`（默认）、`ds-none` 和 `omni-radtan`，输出写入
+`outputs/<输入序列名>_<模型名>/`。
+其他 `omnicalib run` 参数可追加覆盖默认值。
+使用 `--input /path/to/sequence` 切换数据集，输出目录自动跟随序列名变化；
+传入 `mav0/` 时使用其父目录名。`--output` 可显式指定保存位置。
+追加 `--dry-run` 仅打印实际命令，不启动标定。
+
+```bash
+./run_calibration.sh \
+  --input /mnt/Datasets/VSLAM_benchmark/v0.1/OAK4pNew/Layout_0909/20260909_rig01_cam_static_01_134957_c655e0 \
+  --model omni-radtan
+```
+
+新数据集首次运行不应传入其他数据集的 `--reuse-datawash` 或 `--detection-cache`。
+脚本默认使用仓库的 6×6、0.055 m、0.3 AprilGrid 配置；如实际板不同，请传入 `--target`。
+
+
+```bash
+# 复用之前的 EUCM 选帧结果，仅重新标定 DS 模型
+./run_calibration.sh --model ds-none --reuse-datawash outputs/oak4p_135309
+
+# 指定另一处全新输出目录
+./run_calibration.sh --model ds-none --reuse-datawash outputs/oak4p_135309 \
+  --output outputs/oak4p_ds_comparison_02
+```
+
+`--reuse-datawash` 接收已完成运行的根目录（包含 `summary.json`），要求输入、
+相机映射、同步容差、检测器和标定板不变，只修改相机模型。复用时不执行 Datawash
+筛选，`--datawash` 不会改变已有选帧结果；输出必须是全新目录，不允许覆盖旧结果。
+新运行会保留 `datawash/detections_selected.detcache`。旧版本若已删除该缓存，
+则从原始图像序列中仅取已选帧补跑 NN 检测，此时需保持原 NN 模型和检测阈值配置。
+清洗后的 bag 以只读方式复用，不复制；请保留作为来源的旧运行目录。
+
+如果 Kalibr 失败，但已经保存了选帧角点缓存，可以在全新目录中重试，跳过 NN 检测：
+
+```bash
+./run_calibration.sh --model ds-none \
+  --reuse-datawash outputs/oak4p_135309 \
+  --detection-cache outputs/oak4p_135309_ds-none/datawash/detections_selected.detcache \
+  --output outputs/oak4p_135309_ds_retry2
+```
+
+指定的缓存会验证 NN 模型哈希、相机 ID 及其时间戳是否与选帧 bag 一致。
+新标定自动保存 `kalibr/run.log` 和 `kalibr/command.json`，并启用 Python 故障栈。
+如需调试 Kalibr 原生选项，可重复传入 `--kalibr-arg=--选项`；这需要仓库中的
+`docker/kalibr/run_calibration.py`，通过只读挂载使用，无需重建镜像。
+例如 `--kalibr-arg=--no-final-filtering` 会改变过滤流程，不会默认启用。
+
 工具根据 `--input` 自动识别以下三种格式。
 
 ### 图像序列
@@ -111,6 +162,21 @@ frame_id,timestamp_ns,filename
 ```
 
 支持 PNG、JPEG、BMP 和 TIFF。不同相机不要求完全同频，工具按照 `rig.yaml` 中的同步容差形成共视组。
+
+### EuRoC 图像序列
+
+也支持 `mav0/cam0/data.csv` 和 `mav0/cam0/data/` 形式的 EuRoC 数据。
+CSV 表头为 `#timestamp [ns],filename`，时间戳按整数纳秒读取。
+`--input` 可以指向包含 `mav0/` 的序列根目录，也可以直接指向 `mav0/`；
+这两种情况下 `rig.yaml` 的 `directory` 均可填写 `cam0`、`cam1` 等。
+输入序列根目录时也支持显式填写 `directory: mav0/cam0`。
+原始图像和 CSV 无需转换，`imu0/` 和 `meta/` 不会自动参与标定。
+
+OAK-FFC-4P 四相机可使用 `configs/rig_oak4p_euroc.yaml`（`eucm-none`，同步容差 1 ms）。
+若实际板参数为 6×6、标签边长 0.055 m、间距比例 0.3，可使用
+`configs/target_aprilgrid_6x6.yaml`；目标配置必须包含 `target_type: aprilgrid`。
+EuRoC 读取在宿主机完成，可继续使用原有 `hkustswarm/co-calib:v1.0` 镜像。
+加载器仍会一次性读入全部图像字节，请预留足够内存。
 
 ### ROS1 bag
 
