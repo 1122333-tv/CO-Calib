@@ -87,20 +87,29 @@ def _encode_raw_image(message: object) -> tuple[bytes, str]:
 def _read_timestamp_rows(camera_dir: Path) -> list[tuple[int, int, Path]]:
     timestamp_path = camera_dir / "timestamps.csv"
     images_dir = camera_dir / "images"
+    timestamp_column = "timestamp_ns"
+    if not timestamp_path.is_file() and (camera_dir / "data.csv").is_file():
+        timestamp_path = camera_dir / "data.csv"
+        images_dir = camera_dir / "data"
+        timestamp_column = "#timestamp [ns]"
     if not timestamp_path.is_file() or not images_dir.is_dir():
-        raise FileNotFoundError(f"Expected images/ and timestamps.csv under {camera_dir}")
+        raise FileNotFoundError(
+            f"Expected images/ and timestamps.csv or EuRoC data/ and data.csv under {camera_dir}"
+        )
     rows: list[tuple[int, int, Path]] = []
-    with timestamp_path.open("r", encoding="utf-8", newline="") as stream:
-        reader = csv.DictReader(stream)
-        required = {"timestamp_ns", "filename"}
+    with timestamp_path.open("r", encoding="utf-8-sig", newline="") as stream:
+        reader = csv.DictReader(stream, skipinitialspace=True)
+        if reader.fieldnames:
+            reader.fieldnames = [name.strip() for name in reader.fieldnames]
+        required = {timestamp_column, "filename"}
         if not reader.fieldnames or not required.issubset(reader.fieldnames):
-            raise ValueError(f"{timestamp_path} requires columns: timestamp_ns, filename")
+            raise ValueError(f"{timestamp_path} requires columns: {timestamp_column}, filename")
         for fallback_index, item in enumerate(reader):
             source_index = int(item.get("frame_id") or fallback_index)
-            timestamp_ns = int(item["timestamp_ns"])
+            timestamp_ns = int(item[timestamp_column])
             image_path = images_dir / item["filename"]
             if image_path.suffix.lower() not in _IMAGE_SUFFIXES or not image_path.is_file():
-                raise FileNotFoundError(f"Image listed by timestamps.csv is missing: {image_path}")
+                raise FileNotFoundError(f"Image listed by {timestamp_path} is missing: {image_path}")
             rows.append((source_index, timestamp_ns, image_path))
     if not rows:
         raise ValueError(f"No frames listed by {timestamp_path}")
@@ -112,7 +121,10 @@ def read_sequence(path: str | Path, rig: RigSpec) -> dict[str, list[FrameRecord]
     output: dict[str, list[FrameRecord]] = {}
     for camera in rig.cameras:
         records = []
-        for source_index, timestamp_ns, image_path in _read_timestamp_rows(root / camera.directory):
+        camera_dir = root / camera.directory
+        if not camera_dir.exists() and (root / "mav0" / camera.directory).is_dir():
+            camera_dir = root / "mav0" / camera.directory
+        for source_index, timestamp_ns, image_path in _read_timestamp_rows(camera_dir):
             records.append(
                 FrameRecord(
                     camera_id=camera.camera_id,

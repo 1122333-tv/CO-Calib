@@ -36,6 +36,9 @@ def _add_run_arguments(parser: argparse.ArgumentParser) -> None:
     parser.add_argument("--nn-model", type=Path, help=argparse.SUPPRESS)
     parser.add_argument("--kalibr-image", default=DEFAULT_KALIBR_IMAGE, help=argparse.SUPPRESS)
     parser.add_argument("--kalibr-detector-processes", type=int, default=0, help=argparse.SUPPRESS)
+    parser.add_argument("--reuse-datawash", type=Path, help="reuse a completed run; requires a new output directory")
+    parser.add_argument("--detection-cache", type=Path, help="reuse selected NN detections, including from a failed calibration (with --reuse-datawash)")
+    parser.add_argument("--kalibr-arg", action="append", default=[], help="extra Kalibr option; use --kalibr-arg=--option (repeatable)")
     parser.add_argument("--overwrite", action="store_true")
 
 
@@ -52,6 +55,9 @@ def _run_from_args(args: argparse.Namespace) -> int:
         kalibr_detector_processes=args.kalibr_detector_processes,
         device=args.device,
         overwrite=args.overwrite,
+        reuse_datawash=args.reuse_datawash,
+        detection_cache=args.detection_cache,
+        kalibr_args=args.kalibr_arg,
     )
     providers = summary["datawash"].get("execution_providers", [])
     actual_device = "gpu" if "CUDAExecutionProvider" in providers else "cpu"
@@ -82,3 +88,7 @@ def main(argv: list[str] | None = None) -> int:
     if args.command == "run":
         return _run_from_args(args)
     raise RuntimeError(f"Unsupported command: {args.command}")
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

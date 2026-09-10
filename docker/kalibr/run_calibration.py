@@ -87,7 +87,7 @@ def main() -> int:
         *detector_arguments,
         *robust_arguments,
         *output_arguments,
-        *args.extra,
+        *(args.extra[1:] if args.extra[:1] == ["--"] else args.extra),
     ]
     subprocess.run(command, cwd=args.output, check=True)
     return 0

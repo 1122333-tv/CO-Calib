@@ -41,6 +41,7 @@ def _run_kalibr(
     target_path: Path,
     output_dir: Path,
     docker_image: str,
+    kalibr_args: list[str] | None = None,
 ) -> None:
     detector_name = normalize_detector_name(detector)
     output_dir.mkdir(parents=True, exist_ok=True)
@@ -58,6 +59,8 @@ def _run_kalibr(
         "MPLCONFIGDIR=/tmp/matplotlib",
         "-e",
         "MPLBACKEND=Agg",
+        "-e",
+        "PYTHONFAULTHANDLER=1",
         "-v",
         _mount(output_dir, "/output"),
         "-v",
@@ -69,6 +72,11 @@ def _run_kalibr(
     ]
     if detector_name == "nn":
         command.extend(["-v", _mount(selected_cache, "/input/detections.detcache", read_only=True)])
+    if kalibr_args:
+        runner = Path(__file__).resolve().parents[2] / "docker/kalibr/run_calibration.py"
+        if not runner.is_file():
+            raise FileNotFoundError(f"Local Kalibr argument adapter is missing: {runner}")
+        command.extend(["-v", _mount(runner, "/usr/local/bin/omnicalib-calibrate", read_only=True)])
     command.extend(
         [
             str(docker_image),
@@ -87,9 +95,21 @@ def _run_kalibr(
     )
     if detector_name == "nn":
         command.extend(["--cache", "/input/detections.detcache"])
+    if kalibr_args:
+        command.extend(["--", *kalibr_args])
     mounted_bag_placeholder = output_dir / "calibration.bag"
     try:
-        subprocess.run(command, check=True)
+        (output_dir / "command.json").write_text(json.dumps(command, indent=2) + "\n")
+        with (output_dir / "run.log").open("w", encoding="utf-8") as log:
+            with subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+                                  text=True, errors="replace", bufsize=1) as process:
+                for line in process.stdout:
+                    print(line, end="", flush=True)
+                    log.write(line)
+                    log.flush()
+                returncode = process.wait()
+                if returncode:
+                    raise subprocess.CalledProcessError(returncode, command)
     finally:
         if mounted_bag_placeholder.is_file() and mounted_bag_placeholder.stat().st_size == 0:
             mounted_bag_placeholder.unlink()
@@ -108,6 +128,9 @@ def run_full_pipeline(
     kalibr_detector_processes: int = 0,
     device: str = "auto",
     overwrite: bool = False,
+    reuse_datawash: str | Path | None = None,
+    detection_cache: str | Path | None = None,
+    kalibr_args: list[str] | None = None,
 ) -> dict:
     detector_name = normalize_detector_name(detector)
     source_path = Path(source).resolve()
@@ -118,6 +141,18 @@ def run_full_pipeline(
     models = require_kalibr_models(rig)
     config = load_datawash_config(datawash_path)
     output = Path(output_dir).resolve() if output_dir is not None else default_output_dir(source_path)
+    if reuse_datawash is not None:
+        from .reuse import run_reusing_datawash
+        return run_reusing_datawash(
+            previous=Path(reuse_datawash), source=source_path, rig_file=rig_file,
+            target_file=target_file, output=output, detector=detector_name,
+            config=config, model_path=Path(nn_model) if nn_model else bundled_nn_model(),
+            device=device, kalibr_image=kalibr_image,
+            detection_cache=detection_cache,
+            kalibr_args=kalibr_args,
+        )
+    if detection_cache is not None:
+        raise ValueError("--detection-cache requires --reuse-datawash")
     output.mkdir(parents=True, exist_ok=True)
     summary_path = output / "summary.json"
     if summary_path.exists() and not overwrite:
@@ -166,8 +201,9 @@ def run_full_pipeline(
         target_path=target_file,
         output_dir=kalibr_output,
         docker_image=kalibr_image,
+        kalibr_args=kalibr_args,
     )
-    for internal_path in (full_cache, selected_cache, output / ".work"):
+    for internal_path in (full_cache, output / ".work"):
         if internal_path.is_dir():
             shutil.rmtree(internal_path)
     summary = {
@@ -182,6 +218,7 @@ def run_full_pipeline(
         "datawash": datawash_summary,
         "kalibr_output": str(kalibr_output),
         "kalibr_image": str(kalibr_image),
+        "kalibr_args": list(kalibr_args or []),
     }
     summary_path.write_text(json.dumps(summary, indent=2, sort_keys=True) + "\n", encoding="utf-8")
     return summary

@@ -129,6 +129,22 @@ frame_id,timestamp_ns,filename
 
 PNG, JPEG, BMP, and TIFF images are supported. Cameras do not need identical frame rates. Frames are grouped using the synchronization tolerance in `rig.yaml`.
 
+### EuRoC image sequence
+
+EuRoC sequences with `mav0/cam0/data.csv` and `mav0/cam0/data/` are also supported.
+The CSV header is `#timestamp [ns],filename`; timestamps are read as integer nanoseconds.
+Pass either the sequence root containing `mav0/` or `mav0/` itself to `--input`,
+with rig directories such as `cam0` and `cam1`. Explicit `directory: mav0/cam0`
+also works when the input is the sequence root. No image or CSV conversion is needed.
+Files under `imu0/` and `meta/` are not automatically used for calibration.
+
+`configs/rig_oak4p_euroc.yaml` provides four OAK-FFC-4P cameras using `eucm-none`
+and a 1 ms synchronization tolerance. For a 6×6 target with 0.055 m tags and
+0.3 spacing ratio, use `configs/target_aprilgrid_6x6.yaml`. Target configurations
+must include `target_type: aprilgrid`. Loading runs on the host, so the existing
+`hkustswarm/co-calib:v1.0` image can be reused. All encoded images are still loaded
+into memory at once; allow sufficient RAM.
+
 ### ROS1 bag
 
 Pass one `.bag` file to `--input`. Both `sensor_msgs/Image` and `sensor_msgs/CompressedImage` are supported.
