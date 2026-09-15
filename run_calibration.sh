@@ -42,7 +42,7 @@ while (($#)); do
     esac
 done
 case "$MODEL" in
-    eucm-none) RIG_FILE="$PROJECT_DIR/configs/rig_oak4p_euroc.yaml" ;;
+    eucm-none) RIG_FILE="$PROJECT_DIR/configs/rig_oak4p_euroc_eucm.yaml" ;;
     ds-none) RIG_FILE="$PROJECT_DIR/configs/rig_oak4p_euroc_ds.yaml" ;;
     omni-radtan) RIG_FILE="$PROJECT_DIR/configs/rig_oak4p_euroc_omni_radtan.yaml" ;;
     *) echo "Unsupported --model: $MODEL (use eucm-none, ds-none or omni-radtan)" >&2; exit 2 ;;

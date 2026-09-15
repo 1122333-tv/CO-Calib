@@ -172,7 +172,7 @@ CSV 表头为 `#timestamp [ns],filename`，时间戳按整数纳秒读取。
 输入序列根目录时也支持显式填写 `directory: mav0/cam0`。
 原始图像和 CSV 无需转换，`imu0/` 和 `meta/` 不会自动参与标定。
 
-OAK-FFC-4P 四相机可使用 `configs/rig_oak4p_euroc.yaml`（`eucm-none`，同步容差 1 ms）。
+OAK-FFC-4P 四相机可使用 `configs/rig_oak4p_euroc_eucm.yaml`（`eucm-none`，同步容差 1 ms）。
 若实际板参数为 6×6、标签边长 0.055 m、间距比例 0.3，可使用
 `configs/target_aprilgrid_6x6.yaml`；目标配置必须包含 `target_type: aprilgrid`。
 EuRoC 读取在宿主机完成，可继续使用原有 `hkustswarm/co-calib:v1.0` 镜像。

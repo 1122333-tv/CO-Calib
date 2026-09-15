@@ -32,6 +32,28 @@ def _mount(source: Path, target: str, *, read_only: bool = False) -> str:
     return f"{source.resolve()}:{target}{':ro' if read_only else ''}"
 
 
+def _require_camera_messages(clean_bag: Path, rig_path: Path) -> None:
+    """A ROS connection can exist without any selected camera observations."""
+    from rosbags.rosbag1 import Reader
+
+    rig = load_rig(rig_path)
+    with Reader(clean_bag) as reader:
+        counts = {
+            camera.camera_id: sum(c.msgcount for c in reader.connections if c.topic == camera.topic)
+            for camera in rig.cameras
+        }
+    missing = [f"{camera.camera_id} ({camera.topic})" for camera in rig.cameras
+               if counts[camera.camera_id] == 0]
+    if missing:
+        raise ValueError(
+            "Cannot calibrate the requested rig: selected bag has no image messages for "
+            + ", ".join(missing)
+            + f". Selected message counts: {counts}. "
+            "Inspect datawash/summary.json and detection caches for target detection/selection "
+            "failures before retrying; this is not a rosdep error."
+        )
+
+
 def _run_kalibr(
     *,
     detector: str,
@@ -44,6 +66,7 @@ def _run_kalibr(
     kalibr_args: list[str] | None = None,
 ) -> None:
     detector_name = normalize_detector_name(detector)
+    _require_camera_messages(clean_bag, rig_path)
     output_dir.mkdir(parents=True, exist_ok=True)
     command = [
         "docker",
